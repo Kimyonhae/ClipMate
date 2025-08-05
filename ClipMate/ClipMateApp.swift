@@ -7,11 +7,13 @@
 
 import SwiftUI
 
+
 @main
 struct ClipMateApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .navigationTitle("Clip Mate")
         }
     }
 }
