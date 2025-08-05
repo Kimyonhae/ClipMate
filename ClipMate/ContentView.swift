@@ -13,9 +13,11 @@ struct ContentView: View {
         VStack {
             searchView
             folderView
-            HStack {
-                leftListView
-                rightDetailInfoView
+            GeometryReader { geo in
+                HStack {
+                    leftListView(of: geo)
+                    rightDetailInfoView(of: geo)
+                }
             }
         }
         .padding()
@@ -32,18 +34,31 @@ struct ContentView: View {
     // TODO: 폴더 리스트 뷰
     private var folderView: some View {
         HStack {
-            EmptyView()
-            Spacer()
+            ScrollView(.horizontal) {
+                HStack {
+                    Text("첫번째 폴더")
+                        .padding(.horizontal, 4)
+                        .padding(.vertical, 4)
+                        .background(.gray)
+                        .clipShape(.rect(cornerRadius: 4))
+                }
+            }
+            .scrollIndicators(.hidden)
+            .padding(.horizontal)
             Image(systemName: "folder.badge.plus")
                 .padding()
+                .border(.gray, width: 1)
         }
+        .border(.gray, width: 1)
     }
     
     // TODO: 왼쪽 리스트 뷰 (text and image)
-    private var leftListView: some View {
+    private func leftListView(of geo: GeometryProxy) -> some View {
         Group {
-            VStack(alignment: .leading) {
+            VStack {
                 Text("ClipBoard")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .border(.gray, width: 1)
                 ScrollView {
                     HStack {
                         Image(systemName: "photo.circle")
@@ -54,18 +69,17 @@ struct ContentView: View {
                             .lineLimit(1)
                         Spacer()
                     }
-                    .padding(.vertical)
-                    .padding(.trailing)
+                    .padding()
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .frame(maxWidth: .infinity , maxHeight: .infinity)
             }
         }
-        .frame(maxWidth: .infinity)
-        .background(.red)
+        .frame(maxWidth: geo.size.width * 0.4)
+        .border(.gray, width: 1)
     }
     
     // TODO: 오른쪽 Info 정보 (Text and Image and Date)
-    private var rightDetailInfoView: some View {
+    private func rightDetailInfoView(of geo: GeometryProxy) -> some View {
         Group {
             VStack {
                 Text("2025-08-05")
@@ -88,7 +102,8 @@ struct ContentView: View {
                     .tracking(2)
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .frame(maxWidth: geo.size.width * 0.6 , maxHeight: .infinity)
+        .border(.gray, width: 1)
     }
 }
 
