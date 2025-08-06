@@ -6,9 +6,14 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct ContentView: View {
+    @Environment(\.modelContext) var modelContext
+    @Query private var folders: [Folder]
     @State private var searchText: String = ""
+    @StateObject private var vm: ContentView.ViewModel = .init()
+    
     var body: some View {
         VStack {
             searchView
@@ -21,6 +26,35 @@ struct ContentView: View {
             }
         }
         .padding()
+        .onAppear {
+            ClipBoardUseCases.shared.getContext(context: modelContext)
+            FolderUseCases.shared.getContext(context: modelContext)
+            
+            CopyAndPasteManager.shared.eventMonitor(
+                copyCompleteHandler: {
+                    let board = NSPasteboard.general
+                    DispatchQueue.global().asyncAfter(deadline: .now() + 0.2) {
+                        if let copiedString = board.string(forType: .string) {
+                            Task {
+                                await vm.create(copiedString)
+                            }
+                        }
+                    }
+                }
+            )
+            
+            if folders.isEmpty { // 비어있으면 folder를 추가
+                let folder = FolderUseCases.shared.loadInitFolder()
+                vm.selectedFolder = folder
+            }else {
+                vm.selectedFolder = folders.first
+            }
+        }
+        .contentShape(Rectangle()) // 빈 영역도 터치 가능
+        .onTapGesture {
+            guard vm.editId != nil else { return }
+            vm.editId = nil
+        }
     }
     
     // TODO: 검색 뷰
@@ -36,11 +70,13 @@ struct ContentView: View {
         HStack {
             ScrollView(.horizontal) {
                 HStack {
-                    Text("첫번째 폴더")
-                        .padding(.horizontal, 4)
-                        .padding(.vertical, 4)
-                        .background(.gray)
-                        .clipShape(.rect(cornerRadius: 4))
+                    ForEach(folders, id: \.id) { folder in
+                        if vm.editId == folder.id {
+                            folderEditField(folder)
+                        } else {
+                            folderLabel(folder)
+                        }
+                    }
                 }
             }
             .scrollIndicators(.hidden)
@@ -52,6 +88,38 @@ struct ContentView: View {
         .border(.gray, width: 1)
     }
     
+    // TODO: 폴더 수정 뷰
+    @ViewBuilder
+    private func folderEditField(_ folder: Folder) -> some View {
+        TextField("", text: $vm.editText, onCommit: {
+            vm.editId = nil
+            vm.chageFolderName(change: vm.editText)
+        })
+        .padding(.horizontal, 4)
+        .padding(.vertical, 4)
+        .clipShape(.rect(cornerRadius: 4))
+    }
+    
+    // TODO: 기본 폴더 뷰
+    @ViewBuilder
+    private func folderLabel(_ folder: Folder) -> some View {
+        let bgColor: Color = (vm.selectedFolder?.id == folder.id) ? .blue : .gray
+
+        Text(folder.name)
+            .padding(.horizontal, 4)
+            .padding(.vertical, 4)
+            .background(bgColor)
+            .clipShape(.rect(cornerRadius: 4))
+            .onTapGesture {
+                if vm.vaildFolder(compare: folder) {
+                    vm.editId = folder.id
+                    vm.editText = folder.name
+                }else {
+                    print("현재 선택된 폴더가 아닙")
+                }
+            }
+    }
+    
     // TODO: 왼쪽 리스트 뷰 (text and image)
     private func leftListView(of geo: GeometryProxy) -> some View {
         Group {
@@ -60,16 +128,18 @@ struct ContentView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .border(.gray, width: 1)
                 ScrollView {
-                    HStack {
-                        Image(systemName: "photo.circle")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(maxWidth: 30, maxHeight: 30)
-                        Text("현재 복사된 내용으로 추정 중")
-                            .lineLimit(1)
-                        Spacer()
+                    ForEach(vm.selectedFolder?.clips.sorted { $0.date > $1.date } ?? []) { clip in
+                        HStack {
+                            Image(systemName: "photo.circle")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(maxWidth: 30, maxHeight: 30)
+                            Text(clip.text ?? "없습니다")
+                                .lineLimit(1)
+                            Spacer()
+                        }
+                        .padding()
                     }
-                    .padding()
                 }
                 .frame(maxWidth: .infinity , maxHeight: .infinity)
             }
