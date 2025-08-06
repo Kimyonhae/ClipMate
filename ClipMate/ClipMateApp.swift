@@ -10,10 +10,12 @@ import SwiftUI
 
 @main
 struct ClipMateApp: App {
+    
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .navigationTitle("Clip Mate")
+                .modelContainer(for: [ClipBoard.self, Folder.self])
         }
     }
 }
