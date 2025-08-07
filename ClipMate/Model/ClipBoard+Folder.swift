@@ -10,12 +10,12 @@ import SwiftData
 @Model
 final class ClipBoard {
     @Attribute(.unique) var id: String
-    @Relationship(deleteRule: .cascade) var folder: Folder
+    @Relationship(deleteRule: .nullify) var folder: Folder?
     var date: Date = Date()
     var text: String?
     var imageURL: String?
     
-    init(folder: Folder, text: String? = nil, imageURL: String? = nil) {
+    init(folder: Folder?, text: String? = nil, imageURL: String? = nil) {
         self.id = UUID().uuidString
         self.folder = folder
         self.text = text
