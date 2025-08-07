@@ -47,6 +47,12 @@ class CopyAndPasteManager {
                     print("----------------------")
                 }
                 
+                if flags.contains(.maskAlternate), keyCode == 35 {
+                    DispatchQueue.main.async {
+                        NSRunningApplication.current.activate(options: [.activateIgnoringOtherApps])
+                    }
+                }
+                
                 return Unmanaged.passUnretained(event)
             },
             userInfo: ref

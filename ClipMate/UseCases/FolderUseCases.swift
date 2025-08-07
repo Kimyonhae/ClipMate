@@ -54,4 +54,15 @@ class FolderUseCases {
             print("폴더 변경 : \(error)")
         }
     }
+    
+    func deleteFolder(_ folder: Folder?) {
+        guard let folder = folder else { return }
+        do {
+            context.delete(folder)
+            try context.save()
+        } catch {
+            print("폴더 삭제 에러: \(error)")
+        }
+    }
 }
+

@@ -12,7 +12,7 @@ struct ContentView: View {
     @Environment(\.modelContext) var modelContext
     @Query private var folders: [Folder]
     @State private var searchText: String = ""
-    @StateObject private var vm: ContentView.ViewModel = .init()
+    @EnvironmentObject private var vm: ContentView.ViewModel
     
     var body: some View {
         VStack {
@@ -29,7 +29,6 @@ struct ContentView: View {
         .onAppear {
             ClipBoardUseCases.shared.getContext(context: modelContext)
             FolderUseCases.shared.getContext(context: modelContext)
-            
             CopyAndPasteManager.shared.eventMonitor(
                 copyCompleteHandler: {
                     let board = NSPasteboard.general
@@ -84,6 +83,15 @@ struct ContentView: View {
             Image(systemName: "folder.badge.plus")
                 .padding()
                 .border(.gray, width: 1)
+            Image(systemName: "folder.badge.minus")
+                .padding()
+                .border(.gray, width: 1)
+                .onTapGesture {
+                    FolderUseCases.shared.deleteFolder(vm.selectedFolder)
+                    // 삭제 후 selectedFolder를 nil로 설정
+                    vm.selectedFolder = nil
+                    vm.focusClipId = nil
+                }
         }
         .border(.gray, width: 1)
     }
@@ -122,37 +130,58 @@ struct ContentView: View {
     
     // TODO: 왼쪽 리스트 뷰 (text and image)
     private func leftListView(of geo: GeometryProxy) -> some View {
-        Group {
+        let clips = vm.selectedFolder?.clips ?? []
+        let sortedClips = clips.sorted { $0.date > $1.date }
+        
+        return Group {
             VStack {
                 Text("ClipBoard")
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .border(.gray, width: 1)
-                ScrollView {
-                    ForEach(vm.selectedFolder?.clips.sorted { $0.date > $1.date } ?? []) { clip in
-                        HStack {
-                            Image(systemName: "photo.circle")
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(maxWidth: 30, maxHeight: 30)
-                            Text(clip.text ?? "없습니다")
-                                .lineLimit(1)
-                            Spacer()
+                ScrollViewReader { scroll in
+                    ScrollView {
+                        ForEach(sortedClips) { clip in
+                            let isFocused = (vm.focusClipId == clip.id)
+                            
+                            HStack {
+                                Image(systemName: "photo.circle")
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(maxWidth: 30, maxHeight: 30)
+                                Text(clip.text ?? "없습니다")
+                                    .lineLimit(1)
+                                Spacer()
+                            }
+                            .padding()
+                            .background(isFocused ? Color(NSColor.selectedContentBackgroundColor) : Color.clear)
+                            .id(clip.id)
                         }
-                        .padding()
+                    }
+                    .frame(maxWidth: .infinity , maxHeight: .infinity)
+                    .onChange(of: vm.focusClipId) {
+                        if let id = vm.focusClipId {
+                            scroll.scrollTo(id, anchor: .center)
+                        }
                     }
                 }
-                .frame(maxWidth: .infinity , maxHeight: .infinity)
             }
         }
         .frame(maxWidth: geo.size.width * 0.4)
         .border(.gray, width: 1)
+        .onAppear {
+            if let id = vm.selectedFolder?.clips.sorted(by: { $0.date > $1.date }).first?.id {
+                vm.getFocusClip(id)
+            }
+        }
     }
     
     // TODO: 오른쪽 Info 정보 (Text and Image and Date)
     private func rightDetailInfoView(of geo: GeometryProxy) -> some View {
-        Group {
+        let detailClipBoard = vm.selectedFolder?.clips.first(where: { $0.id == vm.focusClipId })
+        
+        return Group {
             VStack {
-                Text("2025-08-05")
+                Text(detailClipBoard?.date.description ?? "0000-00-00")
                     .frame(maxWidth: .infinity, alignment: .leading)
                 HStack {
                     Spacer()
@@ -165,7 +194,7 @@ struct ContentView: View {
                 .padding(.vertical)
                 Text("내용")
                     .frame(maxWidth: .infinity, alignment: .leading)
-                Text("김건희 여사 관련 의혹을 수사하는 민중기 특검팀이 6일까지는 윤석열 전 대통령 체포영장을 집행하지 않을 것이라고 5일 밝혔다. 민중기 특검팀은 6일 김건희 여사를 소환 조사한다.특검은 이날 언론 공지를 통해 윤 전 대통령 변호인 선임서가 접수돼 변호인과 소환 조사 일정, 방식 등을 논의할 예정”이라며 오늘, 내일 중으로는 체포영장 집행 계획이 없다”고 했다.특검은 지난 1일 경기 의왕 서울구치소를 찾아 수감 중인 윤 전 대통령에 대한 체포 영장 집행을 시도했으나 윤 전 대통령이 응하지 않아 중단됐다. 이에 이르면 5일쯤 체포영장 재집행에 나설 것이란 관측이 나왔지만, 특검은 6일까지는 체포영장 집행을 하지 않기로 결정했다.양측은 전날까지 윤 전 대통령이 1일 김건희 특검팀의 체포에 불응하는 과정에서 수의(囚衣)를 벗어 이른바 ‘속옷 버티기’ 논란이 빚어진 것을 두고 치열한 신경전을 벌였다.")
+                Text(detailClipBoard?.text ?? "How's your day going")
                     .frame(maxHeight: .infinity, alignment: .top)
                     .lineLimit(5)
                     .lineSpacing(3)
