@@ -6,11 +6,18 @@
 //
 
 import SwiftUI
-
+import HotKey
 
 @main
 struct ClipMateApp: App {
     @StateObject private var vm = ContentView.ViewModel()
+    var activeKey: HotKey?
+    init() {
+        activeKey = HotKey(key: .m, modifiers: [.command])
+        activeKey?.keyDownHandler = {
+            NSRunningApplication.current.activate(options: [.activateIgnoringOtherApps])
+        }
+    }
     
     var body: some Scene {
         WindowGroup {
