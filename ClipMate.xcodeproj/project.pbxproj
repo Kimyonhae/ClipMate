@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		F4AE065A2E478A6800807EF5 /* HotKey in Frameworks */ = {isa = PBXBuildFile; productRef = F4AE06592E478A6800807EF5 /* HotKey */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		F4B7721A2E41A4890015710E /* ClipMate.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ClipMate.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -23,6 +27,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F4AE065A2E478A6800807EF5 /* HotKey in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,6 +70,7 @@
 			);
 			name = ClipMate;
 			packageProductDependencies = (
+				F4AE06592E478A6800807EF5 /* HotKey */,
 			);
 			productName = ClipMate;
 			productReference = F4B7721A2E41A4890015710E /* ClipMate.app */;
@@ -94,6 +100,9 @@
 			);
 			mainGroup = F4B772112E41A4890015710E;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				F4AE06582E478A6800807EF5 /* XCRemoteSwiftPackageReference "HotKey" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = F4B7721B2E41A4890015710E /* Products */;
 			projectDirPath = "";
@@ -321,6 +330,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		F4AE06582E478A6800807EF5 /* XCRemoteSwiftPackageReference "HotKey" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/soffes/HotKey";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		F4AE06592E478A6800807EF5 /* HotKey */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F4AE06582E478A6800807EF5 /* XCRemoteSwiftPackageReference "HotKey" */;
+			productName = HotKey;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = F4B772122E41A4890015710E /* Project object */;
 }
