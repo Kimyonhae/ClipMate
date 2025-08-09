@@ -35,6 +35,21 @@ extension ContentView {
                 FolderUseCases.shared.changeFolderName(name: name, select: select)
             }
         }
+        
+        // paste Text
+        func paste() {
+            if let id = focusClipId {
+                let board = NSPasteboard.general
+                let clip = ClipBoardUseCases.shared.matchedClip(id: id)
+                board.clearContents()
+                if let text = clip?.text {
+                    board.setString(text, forType: .string)
+                    NSApp.hide(nil)
+                }
+            }else {
+                print("이때는 비 활 성화 되면 안됌")
+            }
+        }
     }
 }
 

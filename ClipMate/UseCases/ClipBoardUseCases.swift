@@ -32,4 +32,19 @@ class ClipBoardUseCases {
             print("clipBoard error : \(error)")
         }
     }
+    
+    func matchedClip(id clipId: String) -> ClipBoard? {
+        let condition = FetchDescriptor<ClipBoard>(
+            predicate: #Predicate { $0.id == clipId }
+        )
+        
+        do {
+            if let clip = try context.fetch(condition).first {
+                return clip
+            }
+        } catch {
+            print("Paste Clip Error : \(error)")
+        }
+        return nil
+    }
 }
