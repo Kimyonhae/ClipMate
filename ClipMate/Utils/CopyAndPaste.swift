@@ -16,16 +16,17 @@ class CopyAndPasteManager {
     
     private class Handlers {
         let copyHandler: () -> Void
-        
-        init(copyHandler: @escaping (() -> Void)) {
+        let pasteHandler: () -> Void
+        init(copyHandler: @escaping (() -> Void), pasteHandler: @escaping (() -> Void)) {
             self.copyHandler = copyHandler
+            self.pasteHandler = pasteHandler
         }
     }
     
     private var eventTap: CFMachPort?
-    func eventMonitor(copyCompleteHandler: @escaping (() -> Void)) {
+    func eventMonitor(copyCompleteHandler: @escaping (() -> Void), pasteComplateHandler: @escaping() -> Void) {
         let mask: CGEventMask = (1 << CGEventType.keyDown.rawValue)
-        let handlers: Handlers = .init(copyHandler: copyCompleteHandler)
+        let handlers: Handlers = .init(copyHandler: copyCompleteHandler, pasteHandler: pasteComplateHandler)
         let ref = UnsafeMutableRawPointer(Unmanaged.passUnretained(handlers).toOpaque())
         self.retainHandlers = handlers
         eventTap = CGEvent.tapCreate(
@@ -46,11 +47,9 @@ class CopyAndPasteManager {
                     print("커스텀 코드 여기에 넣자")
                     print("----------------------")
                 }
-                
-                if flags.contains(.maskAlternate), keyCode == 35 {
-                    DispatchQueue.main.async {
-                        NSRunningApplication.current.activate(options: [.activateIgnoringOtherApps])
-                    }
+              
+                if keyCode == 36 {
+                    handlers.pasteHandler()
                 }
                 
                 return Unmanaged.passUnretained(event)

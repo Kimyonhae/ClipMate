@@ -13,7 +13,7 @@ struct ContentView: View {
     @Query private var folders: [Folder]
     @State private var searchText: String = ""
     @EnvironmentObject private var vm: ContentView.ViewModel
-    
+    @FocusState var isTextFieldFocused: Bool
     var body: some View {
         VStack {
             searchView
@@ -30,7 +30,7 @@ struct ContentView: View {
             ClipBoardUseCases.shared.getContext(context: modelContext)
             FolderUseCases.shared.getContext(context: modelContext)
             CopyAndPasteManager.shared.eventMonitor(
-                copyCompleteHandler: {
+                copyCompleteHandler: { // Copy Logic
                     let board = NSPasteboard.general
                     DispatchQueue.global().asyncAfter(deadline: .now() + 0.2) {
                         if let copiedString = board.string(forType: .string) {
@@ -38,6 +38,11 @@ struct ContentView: View {
                                 await vm.create(copiedString)
                             }
                         }
+                    }
+                },
+                pasteComplateHandler: { // Paste Logic
+                    if !isTextFieldFocused { // TextField의 focus가 아닌 경우에만
+                        vm.paste()
                     }
                 }
             )
@@ -106,6 +111,7 @@ struct ContentView: View {
         .padding(.horizontal, 4)
         .padding(.vertical, 4)
         .clipShape(.rect(cornerRadius: 4))
+        .focused($isTextFieldFocused)
     }
     
     // TODO: 기본 폴더 뷰
