@@ -13,6 +13,7 @@ extension ContentView {
         @Published var editId: String?
         @Published var editText: String = ""
         @Published var focusClipId: String?
+        @Published var isClosed: String? = nil
         
         // ClipBoard create
         func create(_ text: String) {
@@ -48,6 +49,19 @@ extension ContentView {
                 }
             }else {
                 print("이때는 비 활 성화 되면 안됌")
+            }
+        }
+        
+        // new Folder Create
+        func createFolder() {
+            FolderUseCases.shared.createFolder()
+        }
+        
+        // clips focusClipId Update Method
+        func updateFocusIfNeeded() {
+            if let selectedFolder = selectedFolder,
+                let firstClip = selectedFolder.clips.sorted(by: { $0.date > $1.date }).first {
+                self.focusClipId = firstClip.id
             }
         }
     }

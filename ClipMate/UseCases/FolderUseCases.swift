@@ -55,6 +55,17 @@ class FolderUseCases {
         }
     }
     
+    func createFolder() {
+        let newFolder = Folder(name: "UnTitled")
+        
+        do {
+            context.insert(newFolder)
+            try context.save()
+        } catch {
+            print("Create Folder Error : \(error)")
+        }
+    }
+    
     func deleteFolder(_ folder: Folder?) {
         guard let folder = folder else { return }
         do {
