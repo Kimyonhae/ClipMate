@@ -1,4 +1,3 @@
-//
 //  ContentView.swift
 //  ClipMate
 //
@@ -59,6 +58,12 @@ struct ContentView: View {
             guard vm.editId != nil else { return }
             vm.editId = nil
         }
+        .onChange(of: vm.selectedFolder) {
+            vm.updateFocusIfNeeded()
+        }
+        .onChange(of: vm.selectedFolder?.clips) {
+            vm.updateFocusIfNeeded()
+        }
     }
     
     // TODO: 검색 뷰
@@ -79,23 +84,21 @@ struct ContentView: View {
                             folderEditField(folder)
                         } else {
                             folderLabel(folder)
+                                
                         }
                     }
                 }
+                .padding(.horizontal, 4)
+                .padding(.vertical)
             }
             .scrollIndicators(.hidden)
             .padding(.horizontal)
             Image(systemName: "folder.badge.plus")
-                .padding()
+                .padding(20)
                 .border(.gray, width: 1)
-            Image(systemName: "folder.badge.minus")
-                .padding()
-                .border(.gray, width: 1)
+                .contentShape(Rectangle())
                 .onTapGesture {
-                    FolderUseCases.shared.deleteFolder(vm.selectedFolder)
-                    // 삭제 후 selectedFolder를 nil로 설정
-                    vm.selectedFolder = nil
-                    vm.focusClipId = nil
+                    vm.createFolder()
                 }
         }
         .border(.gray, width: 1)
@@ -108,9 +111,9 @@ struct ContentView: View {
             vm.editId = nil
             vm.chageFolderName(change: vm.editText)
         })
-        .padding(.horizontal, 4)
-        .padding(.vertical, 4)
-        .clipShape(.rect(cornerRadius: 4))
+        .padding(4)
+        .background(.clear)
+        .fixedSize()
         .focused($isTextFieldFocused)
     }
     
@@ -118,20 +121,41 @@ struct ContentView: View {
     @ViewBuilder
     private func folderLabel(_ folder: Folder) -> some View {
         let bgColor: Color = (vm.selectedFolder?.id == folder.id) ? .blue : .gray
-
-        Text(folder.name)
-            .padding(.horizontal, 4)
-            .padding(.vertical, 4)
-            .background(bgColor)
-            .clipShape(.rect(cornerRadius: 4))
-            .onTapGesture {
-                if vm.vaildFolder(compare: folder) {
-                    vm.editId = folder.id
-                    vm.editText = folder.name
-                }else {
-                    print("현재 선택된 폴더가 아닙")
+        
+        
+        ZStack(alignment: .topTrailing) {
+            Text(folder.name)
+                .padding(4)
+                .background(bgColor)
+                .clipShape(.rect(cornerRadius: 4))
+                .onTapGesture {
+                    if vm.vaildFolder(compare: folder) {
+                        vm.editId = folder.id
+                        vm.editText = folder.name
+                    }else {
+                        vm.selectedFolder = folder
+                    }
                 }
+            if vm.isClosed == folder.id {
+                Image(systemName: "xmark.circle.fill")
+                    .offset(x: 8, y: -8)
+                    .onTapGesture {
+                        FolderUseCases.shared.deleteFolder(folder)
+                        // 삭제 후 selectedFolder를 nil로 설정
+                        if folders.isEmpty {
+                            vm.selectedFolder = nil
+                        }else {
+                            vm.selectedFolder = folders.first
+                        }
+                        vm.focusClipId = nil
+                    }
             }
+        }
+        .onHover { isHover in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                vm.isClosed = isHover ? folder.id : nil
+            }
+        }
     }
     
     // TODO: 왼쪽 리스트 뷰 (text and image)
