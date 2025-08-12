@@ -29,7 +29,30 @@ class ClipBoardUseCases {
             context.insert(clipBoard)
             try context.save()
         }catch {
-            print("clipBoard error : \(error)")
+            print("copyText clipBoard error : \(error)")
+        }
+    }
+    
+    // MARK: 복사한 이미지를 감지해서 swiftData에 insert
+    func createImageClipBoard(imageData: Data, selectedFolder: Folder?) {
+        guard let folder = selectedFolder else {
+            print("Not Found Folder")
+            return
+        }
+        
+        // filtering 중복 imageData CHECK
+        let allImageData = folder.clips.compactMap { $0.image }
+        guard !allImageData.contains(imageData) else {
+            return
+        }
+        
+        // Create Context.Insert ClipBoard
+        let clipBoard: ClipBoard = .init(folder: folder, image: imageData)
+        do {
+            context.insert(clipBoard)
+            try context.save()
+        }catch {
+            print("copy ImageData clipBoard error : \(error)")
         }
     }
     

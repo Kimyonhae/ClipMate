@@ -13,13 +13,13 @@ final class ClipBoard {
     @Relationship(deleteRule: .nullify) var folder: Folder?
     var date: Date = Date()
     var text: String?
-    var imageURL: String?
+    @Attribute(.externalStorage) var image: Data?
     
-    init(folder: Folder?, text: String? = nil, imageURL: String? = nil) {
+    init(folder: Folder?, text: String? = nil, image: Data? = nil) {
         self.id = UUID().uuidString
         self.folder = folder
         self.text = text
-        self.imageURL = imageURL
+        self.image = image
     }
 }
 

@@ -37,7 +37,7 @@ extension ContentView {
             }
         }
         
-        // paste Text
+        // paste Text And Image
         func paste() {
             if let id = focusClipId {
                 let board = NSPasteboard.general
@@ -47,8 +47,11 @@ extension ContentView {
                     board.setString(text, forType: .string)
                     NSApp.hide(nil)
                 }
-            }else {
-                print("이때는 비 활 성화 되면 안됌")
+                
+                if let imageData = clip?.image {
+                    board.setData(imageData, forType: .tiff)
+                    NSApp.hide(nil)
+                }
             }
         }
         
