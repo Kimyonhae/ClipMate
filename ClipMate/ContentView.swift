@@ -174,11 +174,19 @@ struct ContentView: View {
                             let isFocused = (vm.focusClipId == clip.id)
                             
                             HStack {
-                                Image(systemName: "photo.circle")
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .frame(maxWidth: 30, maxHeight: 30)
-                                Text(clip.text ?? "없습니다")
+                                if let imageData = clip.image,
+                                   let nsImage = NSImage(data: imageData) {
+                                    Image(nsImage: nsImage)
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(maxWidth: 30, maxHeight: 30)
+                                }else {
+                                    Image(systemName: "photo.circle")
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(maxWidth: 30, maxHeight: 30)
+                                }
+                                Text(clip.text ?? "Copy 데이터가 없습니다")
                                     .lineLimit(1)
                                 Spacer()
                             }
@@ -215,10 +223,17 @@ struct ContentView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 HStack {
                     Spacer()
-                    Image(systemName: "photo.circle")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(maxHeight: 100)
+                    if let imageData = detailClipBoard?.image,
+                       let nsImage = NSImage(data: imageData) {
+                        Image(nsImage: nsImage)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            
+                    }else {
+                        Image(systemName: "photo.circle")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                    }
                     Spacer()
                 }
                 .padding(.vertical)

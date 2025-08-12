@@ -15,6 +15,7 @@ struct ClipMateApp: App {
     init() {
         activeKey = HotKey(key: .m, modifiers: [.command])
         activeKey?.keyDownHandler = {
+            // 나중에 업데이트 되서 지원을 하면 변경
             NSRunningApplication.current.activate(options: [.activateIgnoringOtherApps])
         }
     }
@@ -25,6 +26,13 @@ struct ClipMateApp: App {
                 .navigationTitle("Clip Mate")
                 .modelContainer(for: [ClipBoard.self, Folder.self])
                 .environmentObject(vm)
+                .onAppear {
+                    // global Monitor
+                    ChangeClipBoardMonitor.shared.startMonitoring() { imageData in
+                        // swiftData image insert
+                        ClipBoardUseCases.shared.createImageClipBoard(imageData: imageData, selectedFolder: vm.selectedFolder)
+                    }
+                }
         }
         .commands {
             CommandGroup(replacing: .textEditing) {
