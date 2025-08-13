@@ -244,6 +244,16 @@ struct ContentView: View {
                     .lineLimit(5)
                     .lineSpacing(3)
                     .tracking(2)
+                
+                if detailClipBoard == nil {
+                    VStack(alignment: .leading) {
+                        Text("이용 가이드")
+                        Text("Command + m : 화면 활성화")
+                        Text("Command + c : 복사 감지")
+                        Text("Enter : 클립보드 적용")
+                        Text("이미지 복사 감지")
+                    }
+                }
             }
         }
         .frame(maxWidth: geo.size.width * 0.6 , maxHeight: .infinity)

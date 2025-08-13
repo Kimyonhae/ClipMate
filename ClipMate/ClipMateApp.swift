@@ -10,6 +10,7 @@ import HotKey
 
 @main
 struct ClipMateApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var vm = ContentView.ViewModel()
     var activeKey: HotKey?
     init() {
