@@ -1,11 +1,12 @@
 # ClipMate
 
-<img width="120" alt="appIcon" src="https://github.com/user-attachments/assets/7c1cd111-ae07-492b-913e-794a35f0a539" />
+<img width="128" height="128" alt="AppIcon" src="https://github.com/user-attachments/assets/a61bdd89-d81e-4efe-9b55-3106560c1567" />
 
 **ClipMate** is a macOS clipboard utility that helps you manage copy & paste operations more efficiently.  
 It automatically stores various copied data such as text, images, and screenshots, allowing you to quickly search and reuse them when needed.
 
 ---
+
 
 ## 📸 Screenshot
 <img width="800" height="451" alt="screenshot" src="https://github.com/user-attachments/assets/9e8acab8-8126-4142-815e-2d4693de0578" />
