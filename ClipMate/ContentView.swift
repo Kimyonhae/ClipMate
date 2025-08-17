@@ -13,6 +13,7 @@ struct ContentView: View {
     @State private var searchText: String = ""
     @EnvironmentObject private var vm: ContentView.ViewModel
     @FocusState var isTextFieldFocused: Bool
+    @State private var isAuthorization: Bool = false
     var body: some View {
         VStack {
             searchView
@@ -43,6 +44,11 @@ struct ContentView: View {
                     if !isTextFieldFocused { // TextField의 focus가 아닌 경우에만
                         vm.paste()
                     }
+                },
+                completionAuthorization: { authorization in
+                    if authorization { // 권한이 없음
+                        self.isAuthorization = authorization
+                    }
                 }
             )
             
@@ -52,6 +58,7 @@ struct ContentView: View {
             }else {
                 vm.selectedFolder = folders.first
             }
+            
         }
         .contentShape(Rectangle()) // 빈 영역도 터치 가능
         .onTapGesture {
@@ -63,6 +70,19 @@ struct ContentView: View {
         }
         .onChange(of: vm.selectedFolder?.clips) {
             vm.updateFocusIfNeeded()
+        }
+        .alert("권한 필요", isPresented: $isAuthorization) {
+            Button("설정 열기") {
+                // 시스템 설정의 '입력 모니터링' 섹션을 직접 엽니다.
+                if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_InputMonitoring") {
+                    NSWorkspace.shared.open(url)
+                }
+                
+                // Exit in App
+                NSApplication.shared.terminate(nil)
+            }
+        } message: {
+            Text("앱을 사용하려면 '손쉬운 사용' 및 '입력 모니터링' 권한이 필요합니다. 시스템 설정에서 권한을 허용해주세요.")
         }
     }
     
