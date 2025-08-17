@@ -25,6 +25,13 @@ class CopyAndPasteManager {
     
     private var eventTap: CFMachPort?
     func eventMonitor(copyCompleteHandler: @escaping (() -> Void), pasteComplateHandler: @escaping() -> Void) {
+        // 손쉬운 사용 권한을 확인하고, 없는 경우 사용자에게 요청합니다.
+        let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue(): true] as CFDictionary
+        guard AXIsProcessTrustedWithOptions(options) else {
+            print("손쉬운 사용 권한이 없습니다. 시스템 설정 > 개인정보 보호 및 보안 > 손쉬운 사용에서 권한을 추가해주세요.")
+            return
+        }
+        
         let mask: CGEventMask = (1 << CGEventType.keyDown.rawValue)
         let handlers: Handlers = .init(copyHandler: copyCompleteHandler, pasteHandler: pasteComplateHandler)
         let ref = UnsafeMutableRawPointer(Unmanaged.passUnretained(handlers).toOpaque())
