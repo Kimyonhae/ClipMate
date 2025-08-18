@@ -46,7 +46,8 @@ class CopyAndPasteManager {
             eventsOfInterest: mask,
             callback: {_,type, event, refcon in
                 guard type == .keyDown else { return Unmanaged.passUnretained(event) }
-                let handlers = Unmanaged<Handlers>.fromOpaque(refcon!).takeUnretainedValue()
+                guard let refcon = refcon else { return Unmanaged.passUnretained(event) }
+                let handlers = Unmanaged<Handlers>.fromOpaque(refcon).takeUnretainedValue()
                 let flags = event.flags
                 let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
                 

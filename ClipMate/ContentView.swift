@@ -10,87 +10,77 @@ import SwiftData
 struct ContentView: View {
     @Environment(\.modelContext) var modelContext
     @Query private var folders: [Folder]
-    @State private var searchText: String = ""
     @EnvironmentObject private var vm: ContentView.ViewModel
-    @FocusState var isTextFieldFocused: Bool
-    @State private var isAuthorization: Bool = false
+    @FocusState private var focusState: Bool
     var body: some View {
-        VStack {
-            searchView
-            folderView
-            GeometryReader { geo in
-                HStack {
-                    leftListView(of: geo)
-                    rightDetailInfoView(of: geo)
+        ZStack {
+            VStack {
+                searchView
+                folderView
+                GeometryReader { geo in
+                    HStack {
+                        leftListView(of: geo)
+                        rightDetailInfoView(of: geo)
+                    }
                 }
             }
-        }
-        .padding()
-        .onAppear {
-            ClipBoardUseCases.shared.getContext(context: modelContext)
-            FolderUseCases.shared.getContext(context: modelContext)
-            CopyAndPasteManager.shared.eventMonitor(
-                copyCompleteHandler: { // Copy Logic
-                    let board = NSPasteboard.general
-                    DispatchQueue.global().asyncAfter(deadline: .now() + 0.2) {
-                        if let copiedString = board.string(forType: .string) {
-                            Task {
-                                await vm.create(copiedString)
-                            }
-                        }
-                    }
-                },
-                pasteComplateHandler: { // Paste Logic
-                    if !isTextFieldFocused { // TextField의 focus가 아닌 경우에만
-                        vm.paste()
-                    }
-                },
-                completionAuthorization: { authorization in
-                    if authorization { // 권한이 없음
-                        self.isAuthorization = authorization
-                    }
-                }
-            )
-            
-            if folders.isEmpty { // 비어있으면 folder를 추가
-                let folder = FolderUseCases.shared.loadInitFolder()
-                vm.selectedFolder = folder
-            }else {
-                vm.selectedFolder = folders.first
-            }
-            
-        }
-        .contentShape(Rectangle()) // 빈 영역도 터치 가능
-        .onTapGesture {
-            guard vm.editId != nil else { return }
-            vm.editId = nil
-        }
-        .onChange(of: vm.selectedFolder) {
-            vm.updateFocusIfNeeded()
-        }
-        .onChange(of: vm.selectedFolder?.clips) {
-            vm.updateFocusIfNeeded()
-        }
-        .alert("권한 필요", isPresented: $isAuthorization) {
-            Button("설정 열기") {
-                // 시스템 설정의 '입력 모니터링' 섹션을 직접 엽니다.
-                if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_InputMonitoring") {
-                    NSWorkspace.shared.open(url)
-                }
+            .padding()
+            .onAppear {
+                ClipBoardUseCases.shared.getContext(context: modelContext)
+                FolderUseCases.shared.getContext(context: modelContext)
                 
-                // Exit in App
-                NSApplication.shared.terminate(nil)
+                if folders.isEmpty { // 비어있으면 folder를 추가
+                    let folder = FolderUseCases.shared.loadInitFolder()
+                    vm.selectedFolder = folder
+                }else {
+                    if vm.selectedFolder == nil {
+                        vm.selectedFolder = folders.first
+                    }
+                }
             }
-        } message: {
-            Text("앱을 사용하려면 '손쉬운 사용' 및 '입력 모니터링' 권한이 필요합니다. 시스템 설정에서 권한을 허용해주세요.")
+            .contentShape(Rectangle()) // 빈 영역도 터치 가능
+            .onTapGesture {
+                guard vm.editId != nil else { return }
+                vm.editId = nil
+            }
+            .onChange(of: vm.selectedFolder) {
+                vm.updateFocusIfNeeded()
+            }
+            .onChange(of: vm.selectedFolder?.clips) {
+                vm.updateFocusIfNeeded()
+            }
+            .alert("권한 필요", isPresented: $vm.isAuthorization) {
+                Button("설정 열기") {
+                    // 시스템 설정의 '입력 모니터링' 섹션을 직접 엽니다.
+                    if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_InputMonitoring") {
+                        NSWorkspace.shared.open(url)
+                    }
+                    
+                    // Exit in App
+                    NSApplication.shared.terminate(nil)
+                }
+            } message: {
+                Text("앱을 사용하려면 '손쉬운 사용' 및 '입력 모니터링' 권한이 필요합니다. 시스템 설정에서 권한을 허용해주세요.")
+            }
+
+            // Hidden Buttons for Keyboard Shortcuts
+            VStack {
+                Button("") { vm.moveFocus(up: true) }
+                    .keyboardShortcut(.upArrow, modifiers: [])
+                
+                Button("") { vm.moveFocus(up: false) }
+                    .keyboardShortcut(.downArrow, modifiers: [])
+            }
+            .hidden()
         }
+        
     }
     
     // TODO: 검색 뷰
     private var searchView: some View {
         HStack {
             Image(systemName: "magnifyingglass")
-            TextField("", text: $searchText)
+            TextField("", text: $vm.searchText)
         }
     }
     
@@ -134,7 +124,10 @@ struct ContentView: View {
         .padding(4)
         .background(.clear)
         .fixedSize()
-        .focused($isTextFieldFocused)
+        .focused($focusState)
+        .onChange(of: focusState) {
+            vm.isTextFieldFocused = focusState
+        }
     }
     
     // TODO: 기본 폴더 뷰
@@ -180,17 +173,14 @@ struct ContentView: View {
     
     // TODO: 왼쪽 리스트 뷰 (text and image)
     private func leftListView(of geo: GeometryProxy) -> some View {
-        let clips = vm.selectedFolder?.clips ?? []
-        let sortedClips = clips.sorted { $0.date > $1.date }
-        
-        return Group {
+        Group {
             VStack {
                 Text("ClipBoard")
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .border(.gray, width: 1)
                 ScrollViewReader { scroll in
                     ScrollView {
-                        ForEach(sortedClips) { clip in
+                        ForEach(vm.sortedClips) { clip in
                             let isFocused = (vm.focusClipId == clip.id)
                             
                             HStack {
@@ -227,7 +217,12 @@ struct ContentView: View {
         .frame(maxWidth: geo.size.width * 0.4)
         .border(.gray, width: 1)
         .onAppear {
-            if let id = vm.selectedFolder?.clips.sorted(by: { $0.date > $1.date }).first?.id {
+            if let id = vm.sortedClips.first?.id {
+                vm.getFocusClip(id)
+            }
+        }
+        .onChange(of: vm.searchText) {
+            if let id = vm.sortedClips.first?.id {
                 vm.getFocusClip(id)
             }
         }
@@ -273,6 +268,7 @@ struct ContentView: View {
                         Text("Enter : 클립보드 적용")
                         Text("이미지 복사 감지")
                     }
+                    .padding()
                 }
             }
         }

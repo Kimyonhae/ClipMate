@@ -14,6 +14,43 @@ extension ContentView {
         @Published var editText: String = ""
         @Published var focusClipId: String?
         @Published var isClosed: String? = nil
+        @Published var isActive: Bool = false
+        @Published var isAuthorization: Bool = false
+        @Published var isTextFieldFocused: Bool = false
+        @Published var searchText: String = ""
+        var sortedClips: [ClipBoard] {
+            let filteredClips = self.selectedFolder?.clips.filter { clip in
+                guard !self.searchText.isEmpty else { return true }
+                return clip.text?.localizedCaseInsensitiveContains(searchText) ?? false
+            }
+            let sortedClips = filteredClips?.sorted { $0.date > $1.date }
+            return sortedClips ?? []
+        }
+        
+        init() {
+            CopyAndPasteManager.shared.eventMonitor(
+                copyCompleteHandler: { // Copy Logic
+                    DispatchQueue.global().asyncAfter(deadline: .now() + 0.2) {
+                        let board = NSPasteboard.general
+                        if let copiedString = board.string(forType: .string) {
+                            Task {
+                                await self.create(copiedString)
+                            }
+                        }
+                    }
+                },
+                pasteComplateHandler: { // Paste Logic
+                    if !self.isTextFieldFocused && NSApp.isActive {
+                        self.paste()
+                    }
+                },
+                completionAuthorization: { authorization in
+                    if authorization { // 권한이 없음
+                        self.isAuthorization = authorization
+                    }
+                }
+            )
+        }
         
         // ClipBoard create
         func create(_ text: String) {
@@ -36,7 +73,7 @@ extension ContentView {
                 FolderUseCases.shared.changeFolderName(name: name, select: select)
             }
         }
-        
+
         // paste Text And Image
         func paste() {
             if let id = focusClipId {
@@ -45,12 +82,12 @@ extension ContentView {
                 board.clearContents()
                 if let text = clip?.text {
                     board.setString(text, forType: .string)
-                    NSApp.hide(nil)
+                    activeMenuBarExtraWindow()
                 }
                 
                 if let imageData = clip?.image {
                     board.setData(imageData, forType: .tiff)
-                    NSApp.hide(nil)
+                    activeMenuBarExtraWindow()
                 }
             }
         }
@@ -66,6 +103,12 @@ extension ContentView {
                 let firstClip = selectedFolder.clips.sorted(by: { $0.date > $1.date }).first {
                 self.focusClipId = firstClip.id
             }
+        }
+        
+        // active MenuBarExtra Window
+        func activeMenuBarExtraWindow() {
+            let statusItem = NSApp.windows.first?.value(forKey: "statusItem") as? NSStatusItem
+            statusItem?.button?.performClick(nil)
         }
     }
 }
@@ -85,7 +128,11 @@ extension ContentView.ViewModel {
     func moveFocus(up: Bool) {
         guard let folder = selectedFolder else { return }
         guard let currentId = focusClipId else { return }
-        let sortedClips = folder.clips.sorted { $0.date > $1.date }
+        let filteredClips = folder.clips.filter { clip in
+            guard !self.searchText.isEmpty else { return true }
+            return clip.text?.localizedCaseInsensitiveContains(self.searchText) ?? false
+        }
+        let sortedClips = filteredClips.sorted { $0.date > $1.date }
 
         guard !sortedClips.isEmpty else { return }
         guard let currentIndex = sortedClips.firstIndex(where: { $0.id == currentId }) else { return }
