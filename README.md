@@ -9,7 +9,7 @@ It automatically stores various copied data such as text, images, and screenshot
 
 
 ## 📸 Screenshot
-<img width="800" height="451" alt="screenshot" src="https://github.com/user-attachments/assets/9e8acab8-8126-4142-815e-2d4693de0578" />
+<img width="845" height="523" alt="screenshot" src="https://github.com/user-attachments/assets/b7d9d260-e8b6-45ce-8c2b-c37cbd8ec732" />
 
 ---
 
