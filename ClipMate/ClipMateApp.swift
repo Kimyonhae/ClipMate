@@ -16,15 +16,18 @@ struct ClipMateApp: App {
     init() {
         activeKey = HotKey(key: .m, modifiers: [.command])
         activeKey?.keyDownHandler = {
-            // 나중에 업데이트 되서 지원을 하면 변경
-            NSRunningApplication.current.activate(options: [.activateIgnoringOtherApps])
+            /// **MenuBar를 숨기거나 활성화**
+            /// - 복사할 아이템을 누르면 앱이 다시 비활성화 됨 - contentView
+            /// - command + m 에 등록되어있는 로직이므로 재활용
+            let statusItem = NSApp.windows.first?.value(forKey: "statusItem") as? NSStatusItem
+            statusItem?.button?.performClick(nil)
         }
     }
     
     var body: some Scene {
-        WindowGroup {
+        MenuBarExtra {
             ContentView()
-                .navigationTitle("Clip Mate")
+                .frame(minWidth: (NSScreen.main?.frame.width ?? 1000) / 2, maxWidth: .infinity, minHeight: 500, maxHeight: .infinity)
                 .modelContainer(for: [ClipBoard.self, Folder.self])
                 .environmentObject(vm)
                 .onAppear {
@@ -34,19 +37,9 @@ struct ClipMateApp: App {
                         ClipBoardUseCases.shared.createImageClipBoard(imageData: imageData, selectedFolder: vm.selectedFolder)
                     }
                 }
+        } label: {
+            Label("ClipMate", systemImage: "doc.on.clipboard")
         }
-        .commands {
-            CommandGroup(replacing: .textEditing) {
-                Button("Move Up") {
-                    vm.moveFocus(up: true)
-                }
-                .keyboardShortcut(.upArrow, modifiers: [])
-
-                Button("Move Down") {
-                    vm.moveFocus(up: false)
-                }
-                .keyboardShortcut(.downArrow, modifiers: [])
-            }
-        }
+        .menuBarExtraStyle(.window)
     }
 }
