@@ -17,6 +17,7 @@ extension ContentView {
         @Published var isActive: Bool = false
         @Published var isAuthorization: Bool = false
         @Published var isTextFieldFocused: Bool = false
+        @Published var isSearchTextFieldFocused: Bool = false
         @Published var searchText: String = ""
         var sortedClips: [ClipBoard] {
             let filteredClips = self.selectedFolder?.clips.filter { clip in
