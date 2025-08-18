@@ -12,6 +12,7 @@ struct ContentView: View {
     @Query private var folders: [Folder]
     @EnvironmentObject private var vm: ContentView.ViewModel
     @FocusState private var focusState: Bool
+    @FocusState private var isSearchFocused: Bool
     var body: some View {
         ZStack {
             VStack {
@@ -81,6 +82,10 @@ struct ContentView: View {
         HStack {
             Image(systemName: "magnifyingglass")
             TextField("", text: $vm.searchText)
+                .focused($isSearchFocused)
+                .onSubmit {
+                    vm.searchText = ""
+                }
         }
     }
     
@@ -120,6 +125,7 @@ struct ContentView: View {
         TextField("", text: $vm.editText, onCommit: {
             vm.editId = nil
             vm.chageFolderName(change: vm.editText)
+            vm.isTextFieldFocused = false
         })
         .padding(4)
         .background(.clear)
@@ -155,12 +161,16 @@ struct ContentView: View {
                     .onTapGesture {
                         FolderUseCases.shared.deleteFolder(folder)
                         // 삭제 후 selectedFolder를 nil로 설정
-                        if folders.isEmpty {
+                        if folders.isEmpty { // 비어있으면 folder를 추가
                             vm.selectedFolder = nil
                         }else {
-                            vm.selectedFolder = folders.first
+                            if vm.selectedFolder == nil {
+                                vm.selectedFolder = folders.first
+                            }
+                            if vm.selectedFolder?.id == folder.id {
+                                vm.selectedFolder = folders.first
+                            }
                         }
-                        vm.focusClipId = nil
                     }
             }
         }
