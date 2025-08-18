@@ -17,6 +17,18 @@ class FolderUseCases {
         self.context = context
     }
     
+    // all Folder getter
+    func fetchAll() -> [Folder]? {
+        let descriptor = FetchDescriptor<Folder>()
+        do {
+            let items = try context.fetch(descriptor)
+            return items
+        } catch {
+            print("❌ Fetch failed: \(error)")
+            return nil
+        }
+    }
+    
     // MARK: 초기 folder가 없을 시 Undifined 폴더 생성 함수
     func loadInitFolder() -> Folder {
         let initFolder = Folder(name: "UnTitled", clips: [])
