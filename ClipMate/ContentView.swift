@@ -41,6 +41,7 @@ struct ContentView: View {
             }
             .contentShape(Rectangle()) // 빈 영역도 터치 가능
             .onTapGesture {
+                isSearchFocused = false
                 guard vm.editId != nil else { return }
                 vm.editId = nil
             }
@@ -83,9 +84,6 @@ struct ContentView: View {
             Image(systemName: "magnifyingglass")
             TextField("", text: $vm.searchText)
                 .focused($isSearchFocused)
-                .onSubmit {
-                    vm.searchText = ""
-                }
         }
     }
     
