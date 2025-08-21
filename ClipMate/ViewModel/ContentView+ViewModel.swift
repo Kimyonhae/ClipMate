@@ -43,6 +43,7 @@ extension ContentView {
                 pasteComplateHandler: { // Paste Logic
                     if !self.isTextFieldFocused && NSApp.isActive {
                         self.paste()
+                        self.searchText = ""
                     }
                 },
                 completionAuthorization: { authorization in
