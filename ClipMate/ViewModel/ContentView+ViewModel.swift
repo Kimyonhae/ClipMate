@@ -5,10 +5,12 @@
 //  Created by 김용해 on 8/6/25.
 //
 import SwiftUI
+import Foundation
+import HotKey
 
 extension ContentView {
     @MainActor
-    class ViewModel: ObservableObject {
+    class ViewModel: NSObject, ObservableObject {
         @Published var selectedFolder: Folder?
         @Published var editId: String?
         @Published var editText: String = ""
@@ -19,6 +21,11 @@ extension ContentView {
         @Published var isTextFieldFocused: Bool = false
         @Published var isSearchTextFieldFocused: Bool = false
         @Published var searchText: String = ""
+        @Published var isShowScreenShot: Bool = false
+        @Published var activeKey: HotKey?
+        @Published var screenKey: HotKey?
+        @Published var isMenuBarActive: Bool = false
+        
         var sortedClips: [ClipBoard] {
             let filteredClips = self.selectedFolder?.clips.filter { clip in
                 guard !self.searchText.isEmpty else { return true }
@@ -28,7 +35,11 @@ extension ContentView {
             return sortedClips ?? []
         }
         
-        init() {
+        override init() {
+            super.init()
+            activeKey = HotKey(key: .m, modifiers: [.command])
+            screenKey = HotKey(key: .one, modifiers: .option)
+            
             CopyAndPasteManager.shared.eventMonitor(
                 copyCompleteHandler: { // Copy Logic
                     DispatchQueue.global().asyncAfter(deadline: .now() + 0.2) {
@@ -52,8 +63,22 @@ extension ContentView {
                     }
                 }
             )
+            
+            activeKey?.keyDownHandler = {
+                /// **MenuBar를 숨기거나 활성화**
+                /// - 복사할 아이템을 누르면 앱이 다시 비활성화 됨 - contentView
+                /// - command + m 에 등록되어있는 로직이므로 재활용
+                let statusItem = NSApp.windows.first?.value(forKey: "statusItem") as? NSStatusItem
+                statusItem?.button?.performClick(nil)
+            }
+            
+            screenKey?.keyDownHandler = {
+                self.activeMenuBarExtraWindow()
+                self.isShowScreenShot = true // ScreenShot Mode 활성화
+            }
         }
         
+        // MARK: - CoreData
         // ClipBoard create
         func create(_ text: String) {
             ClipBoardUseCases.shared.createClipBoard(copyText: text, selectedFolder: selectedFolder)
@@ -111,12 +136,13 @@ extension ContentView {
         func activeMenuBarExtraWindow() {
             let statusItem = NSApp.windows.first?.value(forKey: "statusItem") as? NSStatusItem
             statusItem?.button?.performClick(nil)
+            self.isMenuBarActive.toggle()
         }
     }
 }
 
 
-// Getter , Setter
+// MARK: Getter , Setter
 extension ContentView.ViewModel {
     // focusClip Getter
     func getFocusClip(_ id: String) {
@@ -124,8 +150,8 @@ extension ContentView.ViewModel {
     }
 }
 
+// MARK: Keyboard Move Scroll
 extension ContentView.ViewModel {
-    
     // keyBoard up, down move focusClipID
     func moveFocus(up: Bool) {
         guard let folder = selectedFolder else { return }

@@ -36,8 +36,12 @@ class ChangeClipBoardMonitor {
     private func handleClipboardChange(completionHandler: @escaping(Data) -> Void) {
         // 클립보드 내용 변경시 처리 로직
         let types = self.board.types ?? []
-        if types.contains(.tiff) || types.contains(.png) {
+        if types.contains(.tiff) {
             if let imageData = board.data(forType: .tiff) {
+                completionHandler(imageData)
+            }
+        }else if types.contains(.png) {
+            if let imageData = board.data(forType: .png) {
                 completionHandler(imageData)
             }
         }
