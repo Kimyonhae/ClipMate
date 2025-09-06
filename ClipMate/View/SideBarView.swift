@@ -11,6 +11,9 @@ struct SideBarView: View {
             }
             sideMenu(icon: "magnifyingglass", command: "2") {}
             sideMenu(icon: "camera.metering.unknown", command: "3") {}
+            sideMenu(icon: "bolt.ring.closed") {
+                NSApp.terminate(nil) // App 종료
+            }
             Spacer()
         }
         .padding(.trailing)
@@ -25,18 +28,23 @@ struct SideBarView: View {
     }
     
     // TODO: Menu Button for SiderBar
-    private func sideMenu(icon iconName: String, command: String ,action: @escaping () -> Void) -> some View {
+    private func sideMenu(icon iconName: String, command: String? = nil ,action: @escaping () -> Void) -> some View {
         Button(action: action, label: {
             VStack {
                 Image(systemName: iconName)
                     .font(.largeTitle)
                 Spacer()
                 HStack {
-                    Image(systemName: "command")
-                    Text("+")
-                    Text(command)
+                    if let command = command {
+                        Image(systemName: "command")
+                        Text("+")
+                        Text(command)
+                    }else {
+                        Text("종료")
+                    }
                 }
                 .font(.caption)
+                .frame(maxWidth: 50)
             }
             .padding(8)
         })
