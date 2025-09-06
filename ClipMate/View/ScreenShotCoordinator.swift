@@ -176,9 +176,28 @@ extension ScreenShotView {
                     guard let nsimage = try await ScreenShotManager.regionScreenShot(
                         rect: self.selectionRect, screen: self.screenImage
                     ) else { return }
-                    
+                    guard let imageData = nsimage.jpegData(quality: 1.0) else { return }
+                    await MainActor.run {
+                        let savePanel = NSSavePanel()
+                        savePanel.allowedContentTypes = [.jpeg]
+                        savePanel.nameFieldStringValue = "\(Date.imageFileName(.now)).jpeg"
+                        savePanel.canCreateDirectories = true
+                        savePanel.title = "이미지 저장"
+
+                        savePanel.begin { response in
+                            guard response == .OK, let fileURL = savePanel.url else { return }
+                            Task {
+                                do {
+                                    try imageData.write(to: fileURL)
+                                } catch {
+                                    debugPrint("이미지 파일 저장 Error : \(error)")
+                                }
+                            }
+                        }
+                    }
+                    toggleScreenMode?()
                 } catch {
-                    print("이미지 파일 저장 Error : \(error)")
+                    debugPrint("NSSavePanel Error : \(error)")
                 }
             }
         }

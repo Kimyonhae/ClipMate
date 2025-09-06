@@ -21,7 +21,11 @@ struct SideBarView: View {
         .overlay {
             if cv.isShowScreenShot {
                 ScreenShotView() {
-                    cv.isShowScreenShot = false
+                    Task {
+                        await MainActor.run {
+                            cv.isShowScreenShot = false
+                        }
+                    }
                 }
             }
         }
