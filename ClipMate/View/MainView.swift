@@ -231,7 +231,7 @@ struct MainView: View {
         
         return Group {
             VStack {
-                Text(detailClipBoard?.date.description ?? "0000-00-00")
+                Text(Date.clipMateDateFormat(detailClipBoard?.date ?? .now))
                     .frame(maxWidth: .infinity, alignment: .leading)
                 HStack {
                     Spacer()
