@@ -24,7 +24,6 @@ extension ContentView {
         @Published var isShowScreenShot: Bool = false
         @Published var activeKey: HotKey?
         @Published var screenKey: HotKey?
-        @Published var isMenuBarActive: Bool = false
         
         var sortedClips: [ClipBoard] {
             let filteredClips = self.selectedFolder?.clips.filter { clip in
@@ -73,7 +72,6 @@ extension ContentView {
             }
             
             screenKey?.keyDownHandler = {
-                self.activeMenuBarExtraWindow()
                 self.isShowScreenShot = true // ScreenShot Mode 활성화
             }
         }
@@ -136,7 +134,6 @@ extension ContentView {
         func activeMenuBarExtraWindow() {
             let statusItem = NSApp.windows.first?.value(forKey: "statusItem") as? NSStatusItem
             statusItem?.button?.performClick(nil)
-            self.isMenuBarActive.toggle()
         }
     }
 }
