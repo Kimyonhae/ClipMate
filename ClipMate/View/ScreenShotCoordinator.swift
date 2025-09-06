@@ -20,7 +20,7 @@ extension ScreenShotView {
         var cancelButton: NSButton?
         var stackView: NSStackView?
         var screenImage: CGImage?
-
+        
         func showWindow() {
             guard screenShotWindow == nil else { return }
 
@@ -96,14 +96,18 @@ extension ScreenShotView {
                 self.stackView = stackView
                 self.saveButton = save
                 self.cancelButton = cancel
-
+                
                 Task {
-                    if let image = try? await ScreenShotManager.createFullScreenShot() {
-                        await MainActor.run {
-                            contentView.backgroundImage = NSImage(cgImage: image, size: NSSize(width: image.width, height: image.height))
-                            contentView.needsDisplay = true
+                    do {
+                        if let image = try await ScreenShotUseCases.shared.takeFullScreenShot() {
+                            await MainActor.run {
+                                contentView.backgroundImage = NSImage(cgImage: image, size: NSSize(width: image.width, height: image.height))
+                                contentView.needsDisplay = true
+                            }
+                            self.screenImage = image
                         }
-                        self.screenImage = image
+                    } catch {
+                        debugPrint("전체 화면 캡처 Error: \(error)")
                     }
                 }
                 
@@ -130,6 +134,7 @@ extension ScreenShotView {
             }
         }
         
+        // Hide Screenshot, 메모리 deinit
         func hideWindow() {
             // This is the full cleanup, only called when the view is dismantled.
             guard screenShotWindow != nil else { return }
@@ -143,18 +148,14 @@ extension ScreenShotView {
             screenShotWindow?.orderOut(nil)
             screenShotWindow = nil
         }
-
+        
         @objc func saveButtonTapped() {
             Task {
                 do {
-                    let nsimage = try await ScreenShotManager.regionScreenShot(
-                        rect: self.selectionRect, screen: self.screenImage
-                    )
-                    
-                    if let nsimage = nsimage {
-                        let pasteBoard = NSPasteboard.general
-                        pasteBoard.clearContents()
-                        pasteBoard.writeObjects([nsimage])
+                    if let nsImage = try await ScreenShotUseCases.shared.createRegionShot(
+                        rect: self.selectionRect, from: self.screenImage
+                    ) {
+                        ScreenShotUseCases.shared.copyToClipboard(image: nsImage)
                     }
                 } catch {
                     debugPrint("부분 캡처 Error: \(error)")
@@ -173,10 +174,12 @@ extension ScreenShotView {
         @objc func downLoadButtonTapped() {
             Task {
                 do {
-                    guard let nsimage = try await ScreenShotManager.regionScreenShot(
-                        rect: self.selectionRect, screen: self.screenImage
+                    guard let nsImage = try await ScreenShotUseCases.shared.createRegionShot(
+                        rect: self.selectionRect, from: self.screenImage
                     ) else { return }
-                    guard let imageData = nsimage.jpegData(quality: 1.0) else { return }
+                    
+                    guard let imageData = nsImage.jpegData(quality: 1.0) else { return }
+                    
                     await MainActor.run {
                         let savePanel = NSSavePanel()
                         savePanel.allowedContentTypes = [.jpeg]
