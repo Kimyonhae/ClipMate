@@ -47,26 +47,51 @@ extension ScreenShotView {
 
                 
                 // Symbols config
-                let config = NSImage.SymbolConfiguration(pointSize: 14, weight: .regular, scale: .medium)
+                let config = NSImage.SymbolConfiguration(pointSize: 20, weight: .regular, scale: .medium)
+                
+                // Create and configure buttons
+                let download = NSButton(image: NSImage(systemSymbolName: "square.and.arrow.down", accessibilityDescription: "다운로드")!.withSymbolConfiguration(config)!,
+                    target: self,
+                    action: #selector(downLoadButtonTapped)
+                )
+                download.bezelStyle = .regularSquare
+                download.isBordered = true
+                
+                download.translatesAutoresizingMaskIntoConstraints = false
+                download.widthAnchor.constraint(equalToConstant: 44).isActive = true
+                download.heightAnchor.constraint(equalToConstant: 44).isActive = true
                 
                 // Create and configure buttons
                 let save = NSButton(image: NSImage(systemSymbolName: "document.on.clipboard", accessibilityDescription: "저장")!.withSymbolConfiguration(config)!,
                     target: self,
                     action: #selector(saveButtonTapped)
                 )
+                save.bezelStyle = .regularSquare
+                save.isBordered = true
+                
+                save.translatesAutoresizingMaskIntoConstraints = false
+                save.widthAnchor.constraint(equalToConstant: 44).isActive = true
+                save.heightAnchor.constraint(equalToConstant: 44).isActive = true
                 
                 // Create and configure buttons
-                let cancel = NSButton(image: NSImage(systemSymbolName: "minus", accessibilityDescription: "취소")!.withSymbolConfiguration(config)!,
+                let cancel = NSButton(image: NSImage(systemSymbolName: "clear", accessibilityDescription: "취소")!.withSymbolConfiguration(config)!,
                     target: self,
                     action: #selector(cancelButtonTapped)
                 )
                 
+                cancel.bezelStyle = .regularSquare
+                cancel.isBordered = true
                 
-                let stackView = NSStackView(views: [save, cancel])
+                cancel.translatesAutoresizingMaskIntoConstraints = false
+                cancel.widthAnchor.constraint(equalToConstant: 44).isActive = true
+                cancel.heightAnchor.constraint(equalToConstant: 44).isActive = true
+                
+                let stackView = NSStackView(views: [download ,save, cancel])
                 stackView.orientation = .horizontal
-                stackView.spacing = 8
+                stackView.spacing = 12
                 stackView.alignment = .centerY
                 stackView.isHidden = true
+                stackView.layer?.backgroundColor = NSColor.red.cgColor
                 contentView.addSubview(stackView)
                 self.stackView = stackView
                 self.saveButton = save
@@ -144,18 +169,26 @@ extension ScreenShotView {
             windowContentView?.needsDisplay = true
             hideButtons()
         }
+        
+        @objc func downLoadButtonTapped() {
+            Task {
+                do {
+                    guard let nsimage = try await ScreenShotManager.regionScreenShot(
+                        rect: self.selectionRect, screen: self.screenImage
+                    ) else { return }
+                    
+                } catch {
+                    print("이미지 파일 저장 Error : \(error)")
+                }
+            }
+        }
 
         func updateButtonPositions(for rect: NSRect) {
-            let buttonSize: CGFloat = 24
-            let spacing: CGFloat = 8
             guard let stack = stackView else { return }
-            stack.setFrameSize(NSSize(width: buttonSize * 2, height: buttonSize))
-            stack.setFrameOrigin(
-                NSPoint(
-                    x: rect.maxX - stack.frame.width - (buttonSize + spacing),
-                    y: rect.minY - stack.frame.height
-                )
-            )
+            
+            let centerX = rect.midX - stack.frame.width / 2
+            let centerY = rect.midY - stack.frame.height / 2
+            stack.setFrameOrigin(NSPoint(x: centerX, y: centerY))
             
             stack.isHidden = false
         }
