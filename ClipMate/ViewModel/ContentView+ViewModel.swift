@@ -20,10 +20,13 @@ extension ContentView {
         @Published var isAuthorization: Bool = false
         @Published var isTextFieldFocused: Bool = false
         @Published var isSearchTextFieldFocused: Bool = false
+        @Published var isCopyToggleVisibled: Bool = false
         @Published var searchText: String = ""
         @Published var isShowScreenShot: Bool = false
         @Published var activeKey: HotKey?
         @Published var screenKey: HotKey?
+        @Published var copyKey: HotKey?
+        
         
         var sortedClips: [ClipBoard] {
             let filteredClips = self.selectedFolder?.clips.filter { clip in
@@ -38,6 +41,7 @@ extension ContentView {
             super.init()
             activeKey = HotKey(key: .m, modifiers: [.command])
             screenKey = HotKey(key: .one, modifiers: .option)
+            copyKey = HotKey(key: .q, modifiers: .command) // toggle 형식의 상태값
             
             CopyAndPasteManager.shared.eventMonitor(
                 copyCompleteHandler: { // Copy Logic
@@ -63,6 +67,12 @@ extension ContentView {
                 }
             )
             
+            // Image 감지
+            ChangeClipBoardMonitor.shared.startMonitoring() { [weak self] imageData in
+                guard let self = self else { return }
+                ClipBoardUseCases.shared.createImageClipBoard(imageData: imageData, selectedFolder: self.selectedFolder)
+            }
+            
             activeKey?.keyDownHandler = {
                 /// **MenuBar를 숨기거나 활성화**
                 /// - 복사할 아이템을 누르면 앱이 다시 비활성화 됨 - contentView
@@ -74,12 +84,23 @@ extension ContentView {
             screenKey?.keyDownHandler = {
                 self.isShowScreenShot = true // ScreenShot Mode 활성화
             }
+            
+            copyKey?.keyDownHandler = { [weak self] in
+                CopyAndPasteManager.shared.isCopyActive.toggle()
+                self?.isCopyToggleVisibled.toggle() // connect binding toggle
+            }
         }
         
         // MARK: - CoreData
         // ClipBoard create
         func create(_ text: String) {
             ClipBoardUseCases.shared.createClipBoard(copyText: text, selectedFolder: selectedFolder)
+        }
+        
+        // active copyHandler setter
+        func toggleCopyClipBoard() {
+            CopyAndPasteManager.shared.isCopyActive.toggle()
+            self.isCopyToggleVisibled.toggle()
         }
         
         // change name ,if you has selectedFolder

@@ -25,13 +25,6 @@ struct ClipMateApp: App {
                 .frame(minWidth: (NSScreen.main?.frame.width ?? 1000) / 2, maxWidth: .infinity, minHeight: 500, maxHeight: .infinity)
                 .modelContainer(for: [ClipBoard.self, Folder.self])
                 .environmentObject(vm)
-                .onAppear {
-                    // global Monitor
-                    ChangeClipBoardMonitor.shared.startMonitoring() { imageData in
-                        // swiftData image insert
-                        ClipBoardUseCases.shared.createImageClipBoard(imageData: imageData, selectedFolder: vm.selectedFolder)
-                    }
-                }
         } label: {
             Label("ClipMate", systemImage: "doc.on.clipboard")
         }
