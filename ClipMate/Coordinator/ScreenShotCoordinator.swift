@@ -20,10 +20,12 @@ extension ScreenShotView {
         var cancelButton: NSButton?
         var stackView: NSStackView?
         var screenImage: CGImage?
+        let manager: ScreenShotManager = .init()
         
         func showWindow() {
             guard screenShotWindow == nil else { return }
-
+            let squre: CGFloat = 32
+            let pointSize: CGFloat = 16
             // ESC key always closes the screenshot view.
             escHotKey = HotKey(key: .escape, modifiers: .init())
             escHotKey?.keyDownHandler = { [weak self] in
@@ -44,47 +46,18 @@ extension ScreenShotView {
                 contentView.onSelectionCancelled = { [weak self] in
                     self?.hideButtons()
                 }
-
+                
                 
                 // Symbols config
-                let config = NSImage.SymbolConfiguration(pointSize: 20, weight: .regular, scale: .medium)
+                let config = NSImage.SymbolConfiguration(pointSize: pointSize, weight: .regular, scale: .medium)
+                
+                let download = manager.nsButtonLayoutConfig(config: config, title: "저장", squre: squre, target: self ,action: #selector(downLoadButtonTapped),icon: "square.and.arrow.down")
                 
                 // Create and configure buttons
-                let download = NSButton(image: NSImage(systemSymbolName: "square.and.arrow.down", accessibilityDescription: "다운로드")!.withSymbolConfiguration(config)!,
-                    target: self,
-                    action: #selector(downLoadButtonTapped)
-                )
-                download.bezelStyle = .regularSquare
-                download.isBordered = true
-                
-                download.translatesAutoresizingMaskIntoConstraints = false
-                download.widthAnchor.constraint(equalToConstant: 44).isActive = true
-                download.heightAnchor.constraint(equalToConstant: 44).isActive = true
+                let save = manager.nsButtonLayoutConfig(config: config, title: "복사", squre: squre, target: self ,action: #selector(saveButtonTapped), icon: "document.on.clipboard")
                 
                 // Create and configure buttons
-                let save = NSButton(image: NSImage(systemSymbolName: "document.on.clipboard", accessibilityDescription: "저장")!.withSymbolConfiguration(config)!,
-                    target: self,
-                    action: #selector(saveButtonTapped)
-                )
-                save.bezelStyle = .regularSquare
-                save.isBordered = true
-                
-                save.translatesAutoresizingMaskIntoConstraints = false
-                save.widthAnchor.constraint(equalToConstant: 44).isActive = true
-                save.heightAnchor.constraint(equalToConstant: 44).isActive = true
-                
-                // Create and configure buttons
-                let cancel = NSButton(image: NSImage(systemSymbolName: "clear", accessibilityDescription: "취소")!.withSymbolConfiguration(config)!,
-                    target: self,
-                    action: #selector(cancelButtonTapped)
-                )
-                
-                cancel.bezelStyle = .regularSquare
-                cancel.isBordered = true
-                
-                cancel.translatesAutoresizingMaskIntoConstraints = false
-                cancel.widthAnchor.constraint(equalToConstant: 44).isActive = true
-                cancel.heightAnchor.constraint(equalToConstant: 44).isActive = true
+                let cancel = manager.nsButtonLayoutConfig(config: config, title: "취소", squre: squre, target: self ,action: #selector(cancelButtonTapped), icon: "clear")
                 
                 let stackView = NSStackView(views: [download ,save, cancel])
                 stackView.orientation = .horizontal
@@ -99,7 +72,7 @@ extension ScreenShotView {
                 
                 Task {
                     do {
-                        if let image = try await ScreenShotUseCases.shared.takeFullScreenShot() {
+                        if let image = try await manager.createFullScreenShot() {
                             await MainActor.run {
                                 contentView.backgroundImage = NSImage(cgImage: image, size: NSSize(width: image.width, height: image.height))
                                 contentView.needsDisplay = true
@@ -151,11 +124,11 @@ extension ScreenShotView {
         
         @objc func saveButtonTapped() {
             Task {
+                
                 do {
-                    if let nsImage = try await ScreenShotUseCases.shared.createRegionShot(
-                        rect: self.selectionRect, from: self.screenImage
-                    ) {
-                        ScreenShotUseCases.shared.copyToClipboard(image: nsImage)
+                    if let nsImage = try await manager.regionScreenShot(rect: selectionRect, screen: screenImage) {
+                        // copy
+                        manager.copyToClipboard(image: nsImage)
                     }
                 } catch {
                     debugPrint("부분 캡처 Error: \(error)")
@@ -174,9 +147,7 @@ extension ScreenShotView {
         @objc func downLoadButtonTapped() {
             Task {
                 do {
-                    guard let nsImage = try await ScreenShotUseCases.shared.createRegionShot(
-                        rect: self.selectionRect, from: self.screenImage
-                    ) else { return }
+                    guard let nsImage = try await manager.regionScreenShot(rect: self.selectionRect, screen: self.screenImage) else { return }
                     
                     guard let imageData = nsImage.jpegData(quality: 1.0) else { return }
                     
@@ -207,10 +178,23 @@ extension ScreenShotView {
 
         func updateButtonPositions(for rect: NSRect) {
             guard let stack = stackView else { return }
+            let spacing: CGFloat = 8
+            var x = rect.origin.x
+            var y = rect.maxY + spacing
             
-            let centerX = rect.midX - stack.frame.width / 2
-            let centerY = rect.midY - stack.frame.height / 2
-            stack.setFrameOrigin(NSPoint(x: centerX, y: centerY))
+            // 스택이 화면을 벗어나면 → 좌측 하단 모서리로 이동
+            if let screen = NSScreen.main {
+                let screenHeight = screen.frame.height
+                let screenWidth = screen.frame.width
+                if y + stack.frame.height > screenHeight {
+                    y = rect.minY - stack.frame.height - spacing
+                } else if x + stack.frame.width > screenWidth {
+                    let move = x + stack.frame.width - screenWidth
+                    x -= move
+                }
+            }
+            
+            stack.setFrameOrigin(NSPoint(x: x, y: y))
             
             stack.isHidden = false
         }
