@@ -14,6 +14,7 @@ extension ScreenShotView {
         private var screenShotWindow: NSWindow?
         var windowContentView: ScreenShotNSView?
         var toggleScreenMode: (() -> Void)?
+        var clipboardTextCloser: ((String) -> Void)?
         var escHotKey: HotKey?
         var selectionRect: CGRect?
         var saveButton: NSButton?
@@ -51,6 +52,8 @@ extension ScreenShotView {
                 // Symbols config
                 let config = NSImage.SymbolConfiguration(pointSize: pointSize, weight: .regular, scale: .medium)
                 
+                let ocr = manager.nsButtonLayoutConfig(config: config, title: "텍스트 추출", squre: squre, target: self ,action: #selector(copyImageTextOCRTapped),icon: "camera.viewfinder")
+                
                 let download = manager.nsButtonLayoutConfig(config: config, title: "저장", squre: squre, target: self ,action: #selector(downLoadButtonTapped),icon: "square.and.arrow.down")
                 
                 // Create and configure buttons
@@ -59,7 +62,7 @@ extension ScreenShotView {
                 // Create and configure buttons
                 let cancel = manager.nsButtonLayoutConfig(config: config, title: "취소", squre: squre, target: self ,action: #selector(cancelButtonTapped), icon: "clear")
                 
-                let stackView = NSStackView(views: [download ,save, cancel])
+                let stackView = NSStackView(views: [ocr, download ,save, cancel])
                 stackView.orientation = .horizontal
                 stackView.spacing = 12
                 stackView.alignment = .centerY
@@ -124,9 +127,10 @@ extension ScreenShotView {
         
         @objc func saveButtonTapped() {
             Task {
-                
                 do {
-                    if let nsImage = try await manager.regionScreenShot(rect: selectionRect, screen: screenImage) {
+                    if let cgImage = try await manager.regionScreenShot(rect: selectionRect, screen: screenImage) {
+                        guard let rect = selectionRect else { return}
+                        let nsImage = NSImage(cgImage: cgImage, size: rect.size)
                         // copy
                         manager.copyToClipboard(image: nsImage)
                     }
@@ -139,15 +143,17 @@ extension ScreenShotView {
 
         @objc func cancelButtonTapped() {
             // Clear the selection and hide the buttons, returning to crosshair mode.
-            windowContentView?.selectPoint = nil
-            windowContentView?.needsDisplay = true
-            hideButtons()
+            toggleScreenMode?()
+            hideWindow()
         }
         
         @objc func downLoadButtonTapped() {
             Task {
                 do {
-                    guard let nsImage = try await manager.regionScreenShot(rect: self.selectionRect, screen: self.screenImage) else { return }
+                    guard let cgImage = try await manager.regionScreenShot(rect: self.selectionRect, screen: self.screenImage) else { return }
+                    
+                    guard let rect = selectionRect else { return}
+                    let nsImage = NSImage(cgImage: cgImage, size: rect.size)
                     
                     guard let imageData = nsImage.jpegData(quality: 1.0) else { return }
                     
@@ -173,6 +179,21 @@ extension ScreenShotView {
                 } catch {
                     debugPrint("NSSavePanel Error : \(error)")
                 }
+            }
+        }
+        
+        @objc func copyImageTextOCRTapped() {
+            Task {
+                guard let cgImage = try await manager.regionScreenShot(rect: self.selectionRect, screen: self.screenImage) else { return }
+                
+                // OCR logic
+                let text = await manager.imageOCRExport(image: cgImage)
+                
+                if !text.isEmpty {
+                    self.clipboardTextCloser?(text)
+                }
+                
+                toggleScreenMode?()
             }
         }
 
