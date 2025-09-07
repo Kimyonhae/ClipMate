@@ -7,6 +7,8 @@
 
 import AppKit
 import ScreenCaptureKit
+import Vision
+import VisionKit
 
 class ScreenShotManager {
     /// FullScreenShot 함수
@@ -44,7 +46,7 @@ class ScreenShotManager {
         return cgImage
     }
     
-    func regionScreenShot(rect: NSRect?, screen fullScreen: CGImage?) async throws -> NSImage? {
+    func regionScreenShot(rect: NSRect?, screen fullScreen: CGImage?) async throws -> CGImage? {
         guard let rect = rect, let fullScreen = fullScreen else {
             return nil
         }
@@ -70,9 +72,32 @@ class ScreenShotManager {
             return nil
         }
         
-        let nsImage = NSImage(cgImage: croppedCGImage, size: rect.size)
+        return croppedCGImage
+    }
+    
+    // 이미지에서 Text 추출 (OCR)
+    func imageOCRExport(image: CGImage) async -> String {
+        let request = VNRecognizeTextRequest()
+            request.revision = VNRecognizeTextRequestRevision3
+            request.recognitionLevel = .accurate
+            request.recognitionLanguages = ["ko-KR"]
+            request.usesLanguageCorrection = true
         
-        return nsImage
+        let handler = VNImageRequestHandler(cgImage: image, options: [:])
+
+        do {
+            try handler.perform([request])
+            guard let observations = request.results else {
+                return ""
+            }
+            let text = observations
+                .compactMap { $0.topCandidates(1).first?.string }
+                .joined(separator: "\n")
+            return text
+        } catch {
+            debugPrint("OCR error: \(error)")
+            return ""
+        }
     }
     
     // NSButton Custon Config func
