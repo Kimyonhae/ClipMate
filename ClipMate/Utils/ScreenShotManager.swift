@@ -12,7 +12,7 @@ class ScreenShotManager {
     /// FullScreenShot 함수
     /// - contentView의 backgroundImage에 넣기 위한 이미지를 제공
     /// - 부분 캡처를 위한 FullScreenShot의 목적도 있음
-    static func createFullScreenShot() async throws -> CGImage? {
+    func createFullScreenShot() async throws -> CGImage? {
         let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
         
         guard let display = content.displays.first else {
@@ -44,7 +44,7 @@ class ScreenShotManager {
         return cgImage
     }
     
-    static func regionScreenShot(rect: NSRect?, screen fullScreen: CGImage?) async throws -> NSImage? {
+    func regionScreenShot(rect: NSRect?, screen fullScreen: CGImage?) async throws -> NSImage? {
         guard let rect = rect, let fullScreen = fullScreen else {
             return nil
         }
@@ -73,6 +73,30 @@ class ScreenShotManager {
         let nsImage = NSImage(cgImage: croppedCGImage, size: rect.size)
         
         return nsImage
+    }
+    
+    // NSButton Custon Config func
+    func nsButtonLayoutConfig(config: NSImage.SymbolConfiguration, title: String, squre: CGFloat,target: NSObject, action: Selector, icon: String) -> NSButton {
+        // Create and configure buttons
+        let button = NSButton(image: NSImage(systemSymbolName: icon, accessibilityDescription: title)!.withSymbolConfiguration(config)!,
+                              target: target,
+                              action: action
+        )
+        button.bezelStyle = .regularSquare
+        button.isBordered = true
+        button.toolTip = title
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.widthAnchor.constraint(equalToConstant: squre).isActive = true
+        button.heightAnchor.constraint(equalToConstant: squre).isActive = true
+        
+        return button
+    }
+    
+    // Copy save on ClipBoard
+    func copyToClipboard(image: NSImage) {
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.writeObjects([image])
     }
 }
 
