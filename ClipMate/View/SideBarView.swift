@@ -25,13 +25,22 @@ struct SideBarView: View {
         .padding(.vertical)
         .overlay {
             if cv.isShowScreenShot {
-                ScreenShotView() {
-                    Task {
-                        await MainActor.run {
-                            cv.isShowScreenShot = false
+                ScreenShotView(
+                    toggleScreenMode: {
+                        Task {
+                            await MainActor.run {
+                                self.cv.isShowScreenShot = false
+                            }
+                        }
+                    },
+                    clipboardTextCloser: { text in
+                        Task {
+                            await MainActor.run {
+                                self.cv.create(text)
+                            }
                         }
                     }
-                }
+                )
             }
         }
     }

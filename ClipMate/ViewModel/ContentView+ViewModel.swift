@@ -40,7 +40,7 @@ extension ContentView {
         override init() {
             super.init()
             activeKey = HotKey(key: .m, modifiers: [.command])
-            screenKey = HotKey(key: .one, modifiers: .option)
+            screenKey = HotKey(key: .one, modifiers: .command)
             copyKey = HotKey(key: .q, modifiers: .command) // toggle 형식의 상태값
             
             CopyAndPasteManager.shared.eventMonitor(
