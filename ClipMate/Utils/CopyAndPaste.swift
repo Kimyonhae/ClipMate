@@ -10,6 +10,7 @@ import AppKit
 
 class CopyAndPasteManager {
     static let shared: CopyAndPasteManager = .init()
+    var isCopyActive: Bool = false
     private init() {}
     
     private var retainHandlers: Handlers?
@@ -37,8 +38,8 @@ class CopyAndPasteManager {
         
         let mask: CGEventMask = (1 << CGEventType.keyDown.rawValue)
         let handlers: Handlers = .init(copyHandler: copyCompleteHandler, pasteHandler: pasteComplateHandler)
-        let ref = UnsafeMutableRawPointer(Unmanaged.passUnretained(handlers).toOpaque())
         self.retainHandlers = handlers
+        let ref = UnsafeMutableRawPointer(Unmanaged.passUnretained(self).toOpaque())
         eventTap = CGEvent.tapCreate(
             tap: .cgSessionEventTap,
             place: .headInsertEventTap,
@@ -47,16 +48,18 @@ class CopyAndPasteManager {
             callback: {_,type, event, refcon in
                 guard type == .keyDown else { return Unmanaged.passUnretained(event) }
                 guard let refcon = refcon else { return Unmanaged.passUnretained(event) }
-                let handlers = Unmanaged<Handlers>.fromOpaque(refcon).takeUnretainedValue()
+                let manager = Unmanaged<CopyAndPasteManager>.fromOpaque(refcon).takeUnretainedValue()
                 let flags = event.flags
                 let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
                 
                 if flags.contains(.maskCommand), keyCode == 8 {
-                    handlers.copyHandler()
+                    if manager.isCopyActive {
+                        manager.retainHandlers?.copyHandler()
+                    }
                 }
               
                 if keyCode == 36 {
-                    handlers.pasteHandler()
+                    manager.retainHandlers?.pasteHandler()
                 }
                 
                 return Unmanaged.passUnretained(event)
