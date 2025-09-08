@@ -15,7 +15,7 @@ struct SideBarView: View {
                 }
                 sideMenu(icon: "magnifyingglass", command: "2") {}
                 sideMenu(icon: "camera.metering.unknown", command: "3") {}
-                sideMenu(icon: "bolt.ring.closed") {
+                sideMenu(icon: "power") {
                     NSApp.terminate(nil) // App 종료
                 }
             }
@@ -49,7 +49,7 @@ struct SideBarView: View {
     private func sideState(command: String? = nil ,action: @escaping () -> Void) -> some View {
         Button(action: action, label: {
             VStack {
-                Text("Copy 감지").font(.caption).fontWeight(.semibold)
+                Text("On/Off").font(.footnote).fontWeight(.semibold).frame(maxWidth: .infinity)
                 Spacer()
                 Toggle(isOn: $cv.isCopyToggleVisibled) {}
                     .toggleStyle(.switch)
@@ -59,17 +59,15 @@ struct SideBarView: View {
                         Text("+")
                         Text(command)
                     }else {
-                        Text("종료")
+                        Text("Exit")
                     }
                 }
                 .font(.caption)
             }
             .frame(maxWidth: 50)
-            .padding(.horizontal,8)
-            .padding(.vertical, 12)
+            .padding(8)
         })
         .buttonStyle(.bordered)
-        .frame(maxHeight: 70)
         .padding(.bottom)
     }
     
@@ -86,7 +84,7 @@ struct SideBarView: View {
                         Text("+")
                         Text(command)
                     }else {
-                        Text("종료")
+                        Text("Exit")
                     }
                 }
                 .font(.caption)

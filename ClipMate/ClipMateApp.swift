@@ -1,10 +1,3 @@
-//
-//  ClipMateApp.swift
-//  ClipMate
-//
-//  Created by 김용해 on 8/5/25.
-//
-
 import SwiftUI
 import HotKey
 
@@ -26,8 +19,26 @@ struct ClipMateApp: App {
                 .modelContainer(for: [ClipBoard.self, Folder.self])
                 .environmentObject(vm)
         } label: {
-            Label("ClipMate", systemImage: "doc.on.clipboard")
+            ColoredMenuBarIcon()
         }
         .menuBarExtraStyle(.window)
+    }
+}
+
+struct ColoredMenuBarIcon: View {
+    private var iconImage: NSImage {
+        let image = NSImage(systemSymbolName: "wrench.and.screwdriver.fill", accessibilityDescription: "ClipMate")!
+        
+        let coloredImage = NSImage(size: image.size, flipped: false) { rect in
+            image.withSymbolConfiguration(NSImage.SymbolConfiguration(paletteColors: [.green, .green]))?
+                .draw(in: rect)
+            return true
+        }
+        coloredImage.isTemplate = false
+        return coloredImage
+    }
+
+    var body: some View {
+        Image(nsImage: iconImage)
     }
 }

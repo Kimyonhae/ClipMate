@@ -171,7 +171,7 @@ struct MainView: View {
     // TODO: 왼쪽 리스트 뷰 (text and image)
     private func leftListView(of geo: GeometryProxy) -> some View {
         Group {
-            VStack {
+            VStack(spacing: 0) {
                 Text("ClipBoard")
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .border(.gray, width: 1)
@@ -188,12 +188,12 @@ struct MainView: View {
                                         .aspectRatio(contentMode: .fit)
                                         .frame(maxWidth: 30, maxHeight: 30)
                                 }else {
-                                    Image(systemName: "photo.circle")
+                                    Image(systemName: "list.clipboard")
                                         .resizable()
                                         .aspectRatio(contentMode: .fit)
                                         .frame(maxWidth: 30, maxHeight: 30)
                                 }
-                                Text(clip.text ?? "Copy 데이터가 없습니다")
+                                Text(clip.text ?? "Not copied Text")
                                     .lineLimit(1)
                                 Spacer()
                             }
@@ -231,43 +231,37 @@ struct MainView: View {
         
         return Group {
             VStack {
-                Text(Date.clipMateDateFormat(detailClipBoard?.date ?? .now))
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                HStack {
-                    Spacer()
+                if detailClipBoard == nil {
+                    TutorialView()
+                } else {
+                    Text(Date.clipMateDateFormat(detailClipBoard?.date ?? .now))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    
                     if let imageData = detailClipBoard?.image,
                        let nsImage = NSImage(data: imageData) {
+                        Text("Image")
+                            .font(.title)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        
                         Image(nsImage: nsImage)
                             .resizable()
                             .aspectRatio(contentMode: .fit)
-                            
-                    }else {
-                        Image(systemName: "photo.circle")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
+                            .frame(maxWidth: .infinity)
+                    } else {
+                        Text("Content")
+                            .font(.title)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        Text(detailClipBoard?.text ?? "How's your day going")
+                            .frame(maxWidth: .infinity ,maxHeight: .infinity, alignment: .top)
+                            .lineSpacing(3)
+                            .tracking(2)
+                            .background(Color.secondary.opacity(0.1))
+                            .clipShape(.rect(cornerRadius: 8))
                     }
                     Spacer()
                 }
-                .padding(.vertical)
-                Text("내용")
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                Text(detailClipBoard?.text ?? "How's your day going")
-                    .frame(maxHeight: .infinity, alignment: .top)
-                    .lineLimit(5)
-                    .lineSpacing(3)
-                    .tracking(2)
-                
-                if detailClipBoard == nil {
-                    VStack(alignment: .leading) {
-                        Text("이용 가이드")
-                        Text("Command + m : 화면 활성화")
-                        Text("Command + c : 복사 감지")
-                        Text("Enter : 클립보드 적용")
-                        Text("이미지 복사 감지")
-                    }
-                    .padding()
-                }
             }
+            .padding()
         }
         .frame(maxWidth: geo.size.width * 0.6 , maxHeight: .infinity)
         .border(.gray, width: 1)
