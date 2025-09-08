@@ -7,9 +7,8 @@ It automatically stores various copied data such as text, images, and screenshot
 
 ---
 
-
 ## 📸 Screenshot
-![ScreenShot](https://github.com/user-attachments/assets/4c26b3ec-0c8e-49d3-a6b0-43eb39785090)
+<img width="839" height="521" alt="image" src="https://github.com/user-attachments/assets/96eaccb0-115d-476e-bc0a-1015fa9c45de" />
 
 ---
 
@@ -24,19 +23,25 @@ It automatically stores various copied data such as text, images, and screenshot
 - **Search Functionality**  
   Instantly search for clipboard content from the search bar at the top.
 
+- **Screenshot Capture**  
+  Easily take screenshots directly from the app.  
+
+- **Copy On/Off Toggle Mode**  
+  Enable, disable unwanted copy Toggle Mode
+  
 - **Preview**  
   Click on a saved entry to preview images and text in the right panel.
 
 - **Supports Various Data Types**  
-  - Text (including Korean/English)
-  - Images & screenshots
+  - Text (including Korean/English)  
+  - Images & screenshots  
   - File and folder paths
 
 ---
 
 ## 🖥 System Requirements
 
-- macOS 13 Ventura or later
+- macOS 14 Sonoma or later  
 - Supports both Apple Silicon & Intel Macs
 
 ---
@@ -50,5 +55,3 @@ Download the latest version from [Releases](./releases)
 ## 🔒 Privacy
 
 - All data is stored **locally** and never transmitted over the network.
-
----
