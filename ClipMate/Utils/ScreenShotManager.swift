@@ -23,6 +23,7 @@ class ScreenShotManager {
         }
         
         let config = SCStreamConfiguration()
+        config.showsCursor = false
         config.pixelFormat = kCVPixelFormatType_32BGRA
         config.minimumFrameInterval = CMTime(value: 1, timescale: 60) // 60fps
         config.width = Int(display.width * 2)
