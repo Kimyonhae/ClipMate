@@ -41,16 +41,16 @@ extension ContentView {
             super.init()
             activeKey = HotKey(key: .m, modifiers: [.command])
             screenKey = HotKey(key: .one, modifiers: .command)
-            copyKey = HotKey(key: .q, modifiers: .command) // toggle 형식의 상태값
+            copyKey = HotKey(key: .q, modifiers: .option) // toggle 형식의 상태값
             
             CopyAndPasteManager.shared.eventMonitor(
                 copyCompleteHandler: { // Copy Logic
-                    DispatchQueue.global().asyncAfter(deadline: .now() + 0.2) {
+                    Task {
+                        try? await Task.sleep(for: .milliseconds(200))
+                        guard !Task.isCancelled else { return }
                         let board = NSPasteboard.general
                         if let copiedString = board.string(forType: .string) {
-                            Task {
-                                await self.create(copiedString)
-                            }
+                            self.create(copiedString)
                         }
                     }
                 },

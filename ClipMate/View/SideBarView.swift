@@ -55,7 +55,7 @@ struct SideBarView: View {
                     .toggleStyle(.switch)
                 HStack {
                     if let command = command {
-                        Image(systemName: "command")
+                        Image(systemName: "option")
                         Text("+")
                         Text(command)
                     }else {
@@ -72,7 +72,7 @@ struct SideBarView: View {
     }
     
     // TODO: Menu Button for SiderBar
-    private func sideMenu(icon iconName: String, command: String? = nil ,action: @escaping () -> Void) -> some View {
+    private func sideMenu(icon iconName: String, command: String? = nil,action: @escaping () -> Void) -> some View {
         Button(action: action, label: {
             VStack {
                 Image(systemName: iconName)
